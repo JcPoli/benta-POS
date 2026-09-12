@@ -125,7 +125,10 @@ export default function App() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col max-lg:h-auto lg:h-screen">
+    <div
+      data-print="shell"
+      className="relative flex min-h-screen flex-col max-lg:h-auto lg:h-screen"
+    >
       <CommandBar
         view={view}
         onView={setView}

@@ -57,15 +57,38 @@
   [data-print="hide"] {
     display: none !important;
   }
+  /* With the sheet open, the register behind it is not part of the receipt.
+     Scoped by :has so printing the page itself is unaffected; browsers without
+     :has simply keep the old behaviour rather than printing a blank page. */
+  [data-print="shell"]:has([data-print="root"]) {
+    display: block !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+  [data-print="shell"]:has([data-print="root"]) > *:not([data-print="root"]) {
+    display: none !important;
+  }
+  /* A receipt taller than one page must flow onto the next, so both the
+     overlay and the sheet come out of fixed positioning and lose the screen
+     height caps and clipping they need on screen. */
+  [data-print="root"],
   [data-print="receipt"] {
     position: static !important;
     inset: auto !important;
     width: auto !important;
     max-width: none !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
     margin: 0 !important;
     border: 0 !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     animation: none !important;
+  }
+  /* Includes the receipt's scroll container, which would otherwise clip. */
+  [data-print="receipt"] * {
+    max-height: none !important;
+    overflow: visible !important;
   }
 }

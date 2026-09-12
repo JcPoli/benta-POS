@@ -63,7 +63,13 @@ export function PaymentSheet({ due, settings, completed, onComplete, onClose }: 
   const showReceipt = completed !== null;
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div
+      data-print="root"
+      className="fixed inset-0 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="sheet-title"
+    >
       <div
         data-print="hide"
         onClick={onClose}
@@ -76,7 +82,7 @@ export function PaymentSheet({ due, settings, completed, onComplete, onClose }: 
       >
         <div
           data-print="hide"
-          className="flex items-center justify-between gap-2.5 border-b border-line px-[18px] pb-[13px] pt-[15px]"
+          className="flex shrink-0 items-center justify-between gap-2.5 border-b border-line px-[18px] pb-[13px] pt-[15px]"
         >
           <span className="leading-tight">
             <span id="sheet-title" className="block text-base font-bold">
@@ -102,10 +108,14 @@ export function PaymentSheet({ due, settings, completed, onComplete, onClose }: 
           </button>
         </div>
 
+        {/* A long receipt — cash, which adds two rows, and many order lines —
+            must scroll inside the sheet rather than be clipped by it. */}
         {showReceipt ? (
-          <Receipt transaction={completed} />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <Receipt transaction={completed} />
+          </div>
         ) : (
-          <div className="flex-1 overflow-y-auto px-[18px] py-4">
+          <div className="min-h-0 flex-1 overflow-y-auto px-[18px] py-4">
             <div role="group" aria-label="Payment method" className="grid grid-cols-2 gap-2">
               <MethodButton
                 label="Cash"
@@ -250,7 +260,7 @@ export function PaymentSheet({ due, settings, completed, onComplete, onClose }: 
 
         <div
           data-print="hide"
-          className="flex gap-2.5 border-t border-line px-[18px] pb-4 pt-[13px]"
+          className="flex shrink-0 gap-2.5 border-t border-line px-[18px] pb-4 pt-[13px]"
         >
           {showReceipt ? (
             <>
