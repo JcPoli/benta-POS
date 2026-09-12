@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import type { OrderLine, Product, Settings } from "../types";
 import type { OrderTotals } from "../lib/order";
@@ -6,10 +7,20 @@ import { taxLabel } from "../lib/tax";
 import { pluralize } from "../lib/format";
 import { CartIcon, MinusIcon, PlusIcon } from "./Icons";
 
+/**
+ * The line a just-added product landed on. The id changes on every add, so
+ * adding the same SKU twice confirms twice.
+ */
+export interface LineHighlight {
+  sku: string;
+  id: number;
+}
+
 interface Props {
   orderNo: number;
   order: OrderLine[];
   products: Product[];
+  highlight: LineHighlight | null;
   totals: OrderTotals;
   settings: Settings;
   onAdjust: (sku: string, delta: number) => void;
@@ -24,6 +35,7 @@ export function OrderPanel({
   orderNo,
   order,
   products,
+  highlight,
   totals,
   settings,
   onAdjust,
@@ -35,6 +47,27 @@ export function OrderPanel({
 }: Props) {
   const empty = order.length === 0;
   const currency = settings.currency;
+  const touchedRef = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * Past a handful of items the newest line lands below the fold, so the
+   * cashier cannot see what they just rang up. Bring it into view and flash it
+   * once. Driven imperatively because the same class name on a re-render would
+   * not restart the animation; Element.animate always does.
+   */
+  useEffect(() => {
+    const row = touchedRef.current;
+    if (row === null || highlight === null) return;
+    row.scrollIntoView({ block: "nearest" });
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    row.animate(
+      [
+        { backgroundColor: "rgba(0, 168, 112, 0.14)" },
+        { backgroundColor: "rgba(0, 168, 112, 0)" },
+      ],
+      { duration: 900, easing: "ease-out" },
+    );
+  }, [highlight]);
 
   return (
     <aside
@@ -70,6 +103,7 @@ export function OrderPanel({
             return (
               <div
                 key={line.sku}
+                ref={highlight !== null && highlight.sku === line.sku ? touchedRef : null}
                 className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 border-b border-line px-[17px] py-3"
               >
                 <div>

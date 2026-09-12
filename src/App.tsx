@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CurrencyCode, Product, Settings, View } from "./types";
 import { useStore } from "./hooks/useStore";
 import type { CompletedSale } from "./hooks/useStore";
-import { filterProducts, findByCode } from "./lib/order";
+import { filterProducts, findByCode, refusalFor } from "./lib/order";
 import { parseAmount, plainAmount } from "./lib/money";
 import { CommandBar } from "./components/CommandBar";
 import { ScanBar } from "./components/ScanBar";
+import type { ScanNotice } from "./components/ScanBar";
 import { CategoryChips } from "./components/CategoryChips";
 import { ProductGrid } from "./components/ProductGrid";
 import { OrderPanel } from "./components/OrderPanel";
+import type { LineHighlight } from "./components/OrderPanel";
 import { HeldPopover, TaxPopover } from "./components/Popovers";
 import { PaymentSheet } from "./components/PaymentSheet";
 import { SalesView } from "./components/SalesView";
@@ -25,6 +27,23 @@ export default function App() {
   const [popover, setPopover] = useState<Popover>("none");
   const [paying, setPaying] = useState(false);
   const [receiptNo, setReceiptNo] = useState<number | null>(null);
+  const [notice, setNotice] = useState<ScanNotice | null>(null);
+  const [highlight, setHighlight] = useState<LineHighlight | null>(null);
+
+  // One counter for both: they only need an identity that changes per event.
+  const eventId = useRef(0);
+
+  /** A refused scan states its reason, then stops taking up the register. */
+  useEffect(() => {
+    if (notice === null) return;
+    const timer = window.setTimeout(() => setNotice(null), 4500);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  function say(text: string) {
+    eventId.current += 1;
+    setNotice({ id: eventId.current, text });
+  }
 
   // Clicking anywhere outside a popover closes it.
   useEffect(() => {
@@ -51,17 +70,43 @@ export default function App() {
     [state.products, query, category],
   );
 
-  function addProduct(product: Product) {
+  /**
+   * Returns false when stock refused the product. A tile cannot reach that
+   * branch — it is already disabled — but a scanner bypasses the grid
+   * entirely, and it used to do so in silence.
+   */
+  function addProduct(product: Product): boolean {
+    const refusal = refusalFor(product, state.order);
+    if (refusal !== null) {
+      say(
+        refusal === "sold-out"
+          ? product.name + " — out of stock"
+          : product.name +
+              " — only " +
+              product.stock +
+              " in stock, already on this order",
+      );
+      return false;
+    }
     store.addProduct(product);
+    eventId.current += 1;
+    setHighlight({ sku: product.sku, id: eventId.current });
+    setNotice(null);
+    return true;
   }
 
   /** A scanner types a code then presses Enter. Fall back to a single match. */
   function submitScan(code: string) {
-    const exact = findByCode(state.products, code);
+    const text = code.trim();
+    if (text === "") return;
+    const exact = findByCode(state.products, text);
     const target = exact ?? (visible.length === 1 ? visible[0] ?? null : null);
-    if (target === null) return;
-    addProduct(target);
-    setQuery("");
+    if (target === null) {
+      say("No product matches “" + text + "”");
+      return;
+    }
+    // A refusal keeps the code in the field, next to the reason it failed.
+    if (addProduct(target)) setQuery("");
   }
 
   function editDiscount() {
@@ -120,6 +165,8 @@ export default function App() {
       setQuery("");
       setCategory("All");
       setPopover("none");
+      setNotice(null);
+      setHighlight(null);
       closeSheet();
     }
   }
@@ -162,7 +209,12 @@ export default function App() {
             aria-label="Products"
             className="flex min-h-0 min-w-0 flex-1 flex-col gap-3"
           >
-            <ScanBar query={query} onQuery={setQuery} onSubmit={submitScan} />
+            <ScanBar
+              query={query}
+              onQuery={setQuery}
+              onSubmit={submitScan}
+              notice={notice}
+            />
             <CategoryChips active={category} onChange={setCategory} />
             <ProductGrid
               products={visible}
@@ -176,6 +228,7 @@ export default function App() {
             orderNo={state.orderNo}
             order={state.order}
             products={state.products}
+            highlight={highlight}
             totals={totals}
             settings={state.settings}
             onAdjust={store.adjust}

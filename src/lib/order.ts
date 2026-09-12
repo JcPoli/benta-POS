@@ -48,6 +48,20 @@ export function availableOf(product: Product, lines: OrderLine[]): number {
   return product.stock - qtyOf(lines, product.sku);
 }
 
+/**
+ * Why `addLine` would refuse this product, or null when it can be added.
+ * `addLine` returns the same array when it refuses, which is deliberate but
+ * invisible — this lets the caller say why before the register goes quiet.
+ * It must mirror the guards in `addLine` exactly.
+ */
+export type AddRefusal = "sold-out" | "all-on-order";
+
+export function refusalFor(product: Product, lines: OrderLine[]): AddRefusal | null {
+  if (product.stock < 1) return "sold-out";
+  if (qtyOf(lines, product.sku) >= product.stock) return "all-on-order";
+  return null;
+}
+
 /** Adding never exceeds stock; a new SKU lands at the end of the order. */
 export function addLine(lines: OrderLine[], product: Product): OrderLine[] {
   const existing = lines.find((l) => l.sku === product.sku);
