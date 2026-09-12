@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Benta design tokens live in tailwind.config.js so utilities and opacity
+ * modifiers work. These mirror the few values plain CSS below needs.
+ * One accent (emerald) reserved for money actions; red is functional only.
+ */
+:root {
+  --mist: #f1f3f7;
+  --ink: #15161b;
+  --em: #00a870;
+}
+
+@layer base {
+  body {
+    background-color: var(--mist);
+    color: var(--ink);
+    font-family: theme("fontFamily.sans");
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--em);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  /* Money and counts must never shift width while they change. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  .sheet-in {
+    @apply animate-sheet-in;
+  }
+  .sheet-up {
+    @apply animate-sheet-up;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-in,
+  .sheet-up {
+    animation: none;
+  }
+}
+
+/* Printing a receipt should print the receipt, nothing else. */
+@media print {
+  body {
+    background: #fff;
+  }
+  [data-print="hide"] {
+    display: none !important;
+  }
+  [data-print="receipt"] {
+    position: static !important;
+    inset: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    animation: none !important;
+  }
+}

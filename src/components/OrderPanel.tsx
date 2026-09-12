@@ -1,0 +1,219 @@
+import type { ReactNode } from "react";
+import type { OrderLine, Product, Settings } from "../types";
+import type { OrderTotals } from "../lib/order";
+import { formatMoney } from "../lib/money";
+import { taxLabel } from "../lib/tax";
+import { pluralize } from "../lib/format";
+import { CartIcon, MinusIcon, PlusIcon } from "./Icons";
+
+interface Props {
+  orderNo: number;
+  order: OrderLine[];
+  products: Product[];
+  totals: OrderTotals;
+  settings: Settings;
+  onAdjust: (sku: string, delta: number) => void;
+  onRemove: (sku: string) => void;
+  onDiscount: () => void;
+  onHold: () => void;
+  onClear: () => void;
+  onPay: () => void;
+}
+
+export function OrderPanel({
+  orderNo,
+  order,
+  products,
+  totals,
+  settings,
+  onAdjust,
+  onRemove,
+  onDiscount,
+  onHold,
+  onClear,
+  onPay,
+}: Props) {
+  const empty = order.length === 0;
+  const currency = settings.currency;
+
+  return (
+    <aside
+      aria-label="Current order"
+      className="flex min-h-0 w-full shrink-0 flex-col rounded-[18px] border border-line bg-surface shadow-lift lg:w-[372px]"
+    >
+      <div className="flex items-start justify-between gap-2.5 border-b border-line px-[17px] pb-[13px] pt-[15px]">
+        <span className="leading-tight">
+          <span className="block text-[15.5px] font-bold">Order #{orderNo}</span>
+          <span className="block text-[12.5px] text-muted">
+            {empty ? "Empty" : pluralize(totals.units, "item", "items")}
+          </span>
+        </span>
+        <span className="flex gap-1.5">
+          <PanelAction label="Hold" onClick={onHold} disabled={empty} />
+          <PanelAction label="Clear" onClick={onClear} disabled={empty} />
+        </span>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto max-lg:max-h-[320px]">
+        {empty ? (
+          <div className="px-5 py-10 text-center text-muted">
+            <span className="inline-block text-line-strong">
+              <CartIcon />
+            </span>
+            <b className="mb-0.5 mt-2.5 block font-semibold text-ink">No items yet</b>
+            <span className="text-[13.5px]">Scan a barcode or tap a product to begin.</span>
+          </div>
+        ) : (
+          order.map((line) => {
+            const product = products.find((p) => p.sku === line.sku);
+            const atStockCeiling = product !== undefined && line.qty >= product.stock;
+            return (
+              <div
+                key={line.sku}
+                className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 border-b border-line px-[17px] py-3"
+              >
+                <div>
+                  <p className="text-[14.5px] font-semibold">{line.name}</p>
+                  <p className="text-xs text-muted tnum">
+                    {formatMoney(line.unit, currency)} each
+                  </p>
+                </div>
+                <p className="text-right font-bold tnum">
+                  {formatMoney(line.unit * line.qty, currency)}
+                </p>
+                <div className="mt-1.5 flex items-center gap-[3px]">
+                  <StepButton
+                    label={"Reduce " + line.name}
+                    onClick={() => onAdjust(line.sku, -1)}
+                  >
+                    <MinusIcon />
+                  </StepButton>
+                  <span className="min-w-[30px] text-center text-sm font-semibold tnum">
+                    {line.qty}
+                  </span>
+                  <StepButton
+                    label={"Add one " + line.name}
+                    disabled={atStockCeiling}
+                    onClick={() => onAdjust(line.sku, 1)}
+                  >
+                    <PlusIcon />
+                  </StepButton>
+                  <button
+                    type="button"
+                    onClick={() => onRemove(line.sku)}
+                    className="ml-1 rounded-lg px-2 py-1 text-[12.5px] text-muted hover:text-danger"
+                  >
+                    Void
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="border-t border-line px-[17px] pt-[13px]">
+        <SumRow label="Subtotal" value={formatMoney(totals.subtotal, currency)} />
+        <div className="flex items-center justify-between py-[3px] text-sm text-muted">
+          <button
+            type="button"
+            onClick={onDiscount}
+            className="text-[13px] underline underline-offset-2 hover:text-ink"
+          >
+            {totals.discount > 0 ? "Change discount" : "Add discount"}
+          </button>
+          <span className="tnum">
+            {totals.discount > 0 ? "-" + formatMoney(totals.discount, currency) : "—"}
+          </span>
+        </div>
+        <div className="flex items-center justify-between py-[3px] text-sm text-muted">
+          <span>
+            Tax <span className="text-[11.5px] text-muted-soft">({taxLabel(settings)})</span>
+          </span>
+          <span className="tnum">{formatMoney(totals.tax, currency)}</span>
+        </div>
+        <div className="mt-2 flex items-center justify-between border-t border-line pt-3 text-[15px] font-semibold">
+          <span>Total</span>
+          <span aria-live="polite" className="text-[27px] font-extrabold tracking-[-0.025em] tnum">
+            {formatMoney(totals.total, currency)}
+          </span>
+        </div>
+      </div>
+
+      <div className="px-[17px] pb-4 pt-[13px]">
+        <button
+          type="button"
+          disabled={empty}
+          onClick={onPay}
+          className={
+            "flex w-full items-center justify-between rounded-[13px] p-4 text-[16.5px] font-bold " +
+            (empty
+              ? "cursor-not-allowed bg-surface-alt text-muted-soft"
+              : "bg-em text-white shadow-pay hover:bg-em-dark")
+          }
+        >
+          <span>Pay</span>
+          <span className="tnum">{formatMoney(totals.total, currency)}</span>
+        </button>
+        <p className="mt-2.5 text-[11.5px] leading-relaxed text-muted">
+          Demo mode: orders stay in this browser. Production adds Supabase for
+          shared records, multiple registers, and staff accounts.
+        </p>
+      </div>
+    </aside>
+  );
+}
+
+function PanelAction({
+  label,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-[9px] border border-line px-[11px] py-1.5 text-[13px] font-semibold text-muted hover:border-line-strong hover:text-ink disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-line disabled:hover:text-muted"
+    >
+      {label}
+    </button>
+  );
+}
+
+function StepButton({
+  label,
+  onClick,
+  disabled = false,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="grid h-[27px] w-[27px] place-items-center rounded-lg border border-line text-muted hover:border-graphite hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line"
+    >
+      {children}
+    </button>
+  );
+}
+
+function SumRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between py-[3px] text-sm text-muted">
+      <span>{label}</span>
+      <span className="tnum">{value}</span>
+    </div>
+  );
+}
