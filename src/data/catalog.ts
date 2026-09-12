@@ -1,4 +1,4 @@
-import type { CategoryName, Product } from "../types";
+import type { CategoryName, PaymentMethod, Product } from "../types";
 
 /** Category accent colours. Kept as hex in TS, not class names, so Tailwind's
  *  content scanner never has to guess at dynamic classes. */
@@ -9,6 +9,13 @@ export const CATEGORY_COLOR: Record<CategoryName | "Other", string> = {
   Household: "#15b79e",
   "Personal care": "#ee46bc",
   Other: "#667085",
+};
+
+/** Payment-method colours, same reasoning: the donut's arcs and the
+ *  transactions list both need them as values, not as class names. */
+export const METHOD_COLOR: Record<PaymentMethod, string> = {
+  cash: "#00a870",
+  card: "#15161b",
 };
 
 export const CATEGORIES: CategoryName[] = [

@@ -1,5 +1,6 @@
 import type { CurrencyCode } from "../types";
 import { formatMoney } from "../lib/money";
+import { METHOD_COLOR } from "../data/catalog";
 
 interface Props {
   cash: number;
@@ -22,14 +23,30 @@ export function PaymentMixDonut({ cash, card, currency }: Props) {
           <Arc color="#e6e8ee" fraction={1} offset={0} />
         ) : (
           <>
-            <Arc color="#15161b" fraction={cardFraction} offset={0} />
-            <Arc color="#00a870" fraction={1 - cardFraction} offset={cardFraction} />
+            <Arc color={METHOD_COLOR.card} fraction={cardFraction} offset={0} />
+            <Arc
+              color={METHOD_COLOR.cash}
+              fraction={1 - cardFraction}
+              offset={cardFraction}
+            />
           </>
         )}
       </svg>
       <div className="flex flex-col gap-2.5 text-[13.5px]">
-        <LegendRow label="Card" amount={card} total={total} color="#15161b" currency={currency} />
-        <LegendRow label="Cash" amount={cash} total={total} color="#00a870" currency={currency} />
+        <LegendRow
+          label="Card"
+          amount={card}
+          total={total}
+          color={METHOD_COLOR.card}
+          currency={currency}
+        />
+        <LegendRow
+          label="Cash"
+          amount={cash}
+          total={total}
+          color={METHOD_COLOR.cash}
+          currency={currency}
+        />
       </div>
     </div>
   );

@@ -53,9 +53,12 @@ export function CommandBar({
           className="flex items-center gap-[7px] rounded-[10px] border border-line bg-surface px-[11px] py-[7px] text-[13.5px] font-semibold text-muted hover:border-line-strong hover:text-ink"
         >
           Held
-          <span className="grid h-[19px] min-w-[19px] place-items-center rounded-full bg-graphite px-[5px] text-[11.5px] font-bold text-white tnum">
-            {heldCount}
-          </span>
+          {/* A zero badge is noise: nothing is held, and the panel says so. */}
+          {heldCount > 0 && (
+            <span className="grid h-[19px] min-w-[19px] place-items-center rounded-full bg-graphite px-[5px] text-[11.5px] font-bold text-white tnum">
+              {heldCount}
+            </span>
+          )}
         </button>
 
         <span className="relative">

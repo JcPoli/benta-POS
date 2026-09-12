@@ -102,7 +102,7 @@ export function TaxPopover({ settings, onPatch }: TaxProps) {
             className={
               "rounded-[11px] border px-3 py-2.5 text-left " +
               (settings.taxMode === mode.value
-                ? "border-graphite shadow-[inset_0_0_0_1px_#15161b]"
+                ? "border-graphite shadow-select"
                 : "border-line hover:border-line-strong")
             }
           >

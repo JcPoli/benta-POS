@@ -21,6 +21,13 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /*
+   * The radius rounds the ring on focusables that have none of their own —
+   * the discount and reset text buttons. Anything with a rounded-* utility
+   * overrides it, because utilities are a later layer at equal specificity,
+   * and the outline follows that element's own corners instead. Both
+   * outcomes are wanted; do not "fix" this by deleting the radius.
+   */
   :focus-visible {
     outline: 2px solid var(--em);
     outline-offset: 2px;

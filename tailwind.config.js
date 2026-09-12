@@ -11,9 +11,20 @@ export default {
         ink: "#15161b",
         muted: { DEFAULT: "#667085", soft: "#98a2b3" },
         line: { DEFAULT: "#e6e8ee", strong: "#d3d8e0" },
-        // The one accent, reserved for money actions.
-        em: { DEFAULT: "#00a870", dark: "#008c5d" },
-        danger: "#d92d20",
+        // The one accent, reserved for money actions. `soft` and `ring` are the
+        // tinted surface and hairline an accented state sits on, named here so
+        // they stay one value rather than drifting per component.
+        em: {
+          DEFAULT: "#00a870",
+          dark: "#008c5d",
+          soft: "rgba(0, 168, 112, 0.1)",
+          ring: "rgba(0, 168, 112, 0.38)",
+        },
+        danger: {
+          DEFAULT: "#d92d20",
+          soft: "rgba(217, 45, 32, 0.07)",
+          ring: "rgba(217, 45, 32, 0.34)",
+        },
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', "system-ui", "-apple-system", "sans-serif"],
@@ -24,6 +35,8 @@ export default {
         lift: "0 1px 3px rgba(16, 24, 40, 0.06), 0 14px 34px -14px rgba(16, 24, 40, 0.16)",
         sheet: "0 2px 6px rgba(16, 24, 40, 0.07), 0 24px 60px -20px rgba(16, 24, 40, 0.26)",
         pay: "0 8px 20px -10px rgba(0, 168, 112, 0.8)",
+        // The inner hairline that marks a chosen option.
+        select: "inset 0 0 0 1px #15161b",
       },
       keyframes: {
         "sheet-in": {

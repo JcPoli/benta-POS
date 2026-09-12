@@ -68,7 +68,7 @@ export function ScanBar({ query, onQuery, onSubmit, notice }: Props) {
         {notice !== null && (
           <p
             key={notice.id}
-            className="mt-2 animate-fade-in rounded-[10px] border border-[rgba(217,45,32,0.34)] bg-[rgba(217,45,32,0.07)] px-3 py-2 text-[13px] font-medium text-danger motion-reduce:animate-none"
+            className="mt-2 animate-fade-in rounded-[10px] border border-danger-ring bg-danger-soft px-3 py-2 text-[13px] font-medium text-danger motion-reduce:animate-none"
           >
             {notice.text}
           </p>

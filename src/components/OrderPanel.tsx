@@ -160,7 +160,7 @@ export function OrderPanel({
                       // then lifts a 36px control to a 44px target.
                       "relative ml-1 rounded-[10px] px-2.5 py-2.5 text-[12.5px] font-semibold before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] " +
                       (armed === line.sku
-                        ? "bg-[rgba(217,45,32,0.07)] text-danger"
+                        ? "bg-danger-soft text-danger"
                         : "text-muted hover:text-danger")
                     }
                   >

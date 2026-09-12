@@ -250,7 +250,7 @@ export function PaymentSheet({ due, settings, completed, onComplete, onClose }: 
                       className={
                         "rounded-[11px] border bg-surface px-1 py-2.5 text-[14.5px] font-bold " +
                         (tipPercent === percent
-                          ? "border-graphite shadow-[inset_0_0_0_1px_#15161b]"
+                          ? "border-graphite shadow-select"
                           : "border-line hover:border-line-strong")
                       }
                     >
@@ -270,7 +270,7 @@ export function PaymentSheet({ due, settings, completed, onComplete, onClose }: 
                   className={
                     "mt-3.5 w-full rounded-[14px] border px-[18px] py-[22px] text-center " +
                     (approved
-                      ? "border-solid border-[rgba(0,168,112,0.4)] bg-[rgba(0,168,112,0.1)]"
+                      ? "border-solid border-em-ring bg-em-soft"
                       : "border-dashed border-line-strong hover:border-graphite")
                   }
                 >
@@ -346,7 +346,7 @@ function MethodButton({
       className={
         "flex items-center justify-center gap-2 rounded-xl border bg-surface px-3 py-3.5 text-[14.5px] font-semibold " +
         (active
-          ? "border-graphite text-ink shadow-[inset_0_0_0_1px_#15161b]"
+          ? "border-graphite text-ink shadow-select"
           : "border-line text-muted hover:border-line-strong hover:text-ink")
       }
     >
@@ -367,9 +367,9 @@ function CalcRow({
 }) {
   const toneClass =
     tone === "ok"
-      ? "border-[rgba(0,168,112,0.38)] bg-[rgba(0,168,112,0.1)]"
+      ? "border-em-ring bg-em-soft"
       : tone === "short"
-        ? "border-[rgba(217,45,32,0.34)] bg-[rgba(217,45,32,0.07)]"
+        ? "border-danger-ring bg-danger-soft"
         : "border-line bg-surface-alt";
   const valueClass =
     tone === "ok" ? "text-em-dark" : tone === "short" ? "text-danger" : "text-ink";
