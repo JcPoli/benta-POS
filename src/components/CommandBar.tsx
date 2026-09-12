@@ -29,7 +29,7 @@ export function CommandBar({
   onToggleTax,
 }: Props) {
   return (
-    <header className="flex flex-wrap items-center gap-3.5 border-b border-line bg-surface px-4 py-2.5 sm:px-[18px]">
+    <header className="flex flex-wrap items-center gap-3.5 border-b border-line bg-surface px-4 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-[18px]">
       <div className="flex items-center gap-2.5">
         <span className="grid h-[33px] w-[33px] place-items-center rounded-[10px] bg-graphite text-white">
           <RegisterIcon />

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { OrderLine, Product, Settings } from "../types";
 import type { OrderTotals } from "../lib/order";
@@ -48,6 +48,24 @@ export function OrderPanel({
   const empty = order.length === 0;
   const currency = settings.currency;
   const touchedRef = useRef<HTMLDivElement | null>(null);
+
+  /**
+   * Void sits a few pixels from the minus key and throws away the whole line,
+   * so it asks once. Armed on the line's SKU, not a boolean, so arming one row
+   * never arms another.
+   */
+  const [armed, setArmed] = useState<string | null>(null);
+
+  // Anything that changes the order under the cashier disarms it.
+  useEffect(() => {
+    setArmed(null);
+  }, [order]);
+
+  useEffect(() => {
+    if (armed === null) return;
+    const timer = window.setTimeout(() => setArmed(null), 3500);
+    return () => window.clearTimeout(timer);
+  }, [armed]);
 
   /**
    * Past a handful of items the newest line lands below the fold, so the
@@ -115,14 +133,14 @@ export function OrderPanel({
                 <p className="text-right font-bold tnum">
                   {formatMoney(line.unit * line.qty, currency)}
                 </p>
-                <div className="mt-1.5 flex items-center gap-[3px]">
+                <div className="mt-1.5 flex items-center gap-1.5">
                   <StepButton
                     label={"Reduce " + line.name}
                     onClick={() => onAdjust(line.sku, -1)}
                   >
                     <MinusIcon />
                   </StepButton>
-                  <span className="min-w-[30px] text-center text-sm font-semibold tnum">
+                  <span className="min-w-[34px] text-center text-sm font-semibold tnum">
                     {line.qty}
                   </span>
                   <StepButton
@@ -134,10 +152,19 @@ export function OrderPanel({
                   </StepButton>
                   <button
                     type="button"
-                    onClick={() => onRemove(line.sku)}
-                    className="ml-1 rounded-lg px-2 py-1 text-[12.5px] text-muted hover:text-danger"
+                    onClick={() =>
+                      armed === line.sku ? onRemove(line.sku) : setArmed(line.sku)
+                    }
+                    className={
+                      // inset-x-0 gives the pseudo-element a width; -inset-y-1
+                      // then lifts a 36px control to a 44px target.
+                      "relative ml-1 rounded-[10px] px-2.5 py-2.5 text-[12.5px] font-semibold before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] " +
+                      (armed === line.sku
+                        ? "bg-[rgba(217,45,32,0.07)] text-danger"
+                        : "text-muted hover:text-danger")
+                    }
                   >
-                    Void
+                    {armed === line.sku ? "Remove?" : "Void"}
                   </button>
                 </div>
               </div>
@@ -189,6 +216,12 @@ export function OrderPanel({
           <span>Pay</span>
           <span className="tnum">{formatMoney(totals.total, currency)}</span>
         </button>
+        {/* Only where a keyboard is likely; a touch till has no use for it. */}
+        <p className="mt-2.5 hidden text-[11.5px] leading-relaxed text-muted lg:block">
+          <Kbd>P</Kbd> pay <Kbd>H</Kbd> hold <Kbd>C</Kbd> clear <Kbd>D</Kbd>{" "}
+          discount <Kbd>/</Kbd> search
+        </p>
+
         <p className="mt-2.5 text-[11.5px] leading-relaxed text-muted">
           Demo mode: orders stay in this browser. Production adds Supabase for
           shared records, multiple registers, and staff accounts.
@@ -236,10 +269,21 @@ function StepButton({
       aria-label={label}
       onClick={onClick}
       disabled={disabled}
-      className="grid h-[27px] w-[27px] place-items-center rounded-lg border border-line text-muted hover:border-graphite hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line"
+      /* 40px visually, 44x48 to the finger. The pseudo-element grows the hit
+         box by less than the 6px gap, so neighbouring keys never overlap. */
+      className="relative grid h-10 w-10 place-items-center rounded-[11px] border border-line text-muted before:absolute before:-inset-x-0.5 before:-inset-y-1 before:content-[''] hover:border-graphite hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-line"
     >
       {children}
     </button>
+  );
+}
+
+/** Matches the "/" cap on the scan field, so the two read as one idiom. */
+function Kbd({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="rounded-[5px] border border-line-strong bg-surface-alt px-[5px] py-px font-sans text-[11px] font-semibold text-muted">
+      {children}
+    </kbd>
   );
 }
 

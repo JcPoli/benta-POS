@@ -45,6 +45,53 @@ export default function App() {
     setNotice({ id: eventId.current, text });
   }
 
+  /**
+   * Till shortcuts. Single letters rather than function keys, which browsers
+   * claim for their own; they only fire when focus is not in a field, so "/"
+   * then typing a search still works, and a numeric barcode never collides.
+   * The payment sheet owns the keyboard while it is open.
+   */
+  useEffect(() => {
+    function onKey(event: globalThis.KeyboardEvent) {
+      if (paying || view !== "register") return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
+      ) {
+        return;
+      }
+      // Each of these mirrors a button that is disabled on an empty order, so
+      // an empty order stays silent rather than scolding: the panel says so.
+      if (state.order.length === 0) return;
+
+      switch (event.key.toLowerCase()) {
+        case "p":
+          setPaying(true);
+          break;
+        case "h":
+          store.holdOrder();
+          break;
+        case "c":
+          store.clearOrder();
+          break;
+        case "d":
+          editDiscount();
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // No dependency array on purpose: the handler closes over editDiscount and
+    // the live order, and re-subscribing one listener per render costs less
+    // than reasoning about which of those went stale.
+  });
+
   // Clicking anywhere outside a popover closes it.
   useEffect(() => {
     if (popover === "none") return;

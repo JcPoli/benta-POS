@@ -26,14 +26,6 @@ export function PaymentSheet({ due, settings, completed, onComplete, onClose }: 
 
   const currency = settings.currency;
 
-  useEffect(() => {
-    function onKey(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   const entered = tenderDigits !== "";
   const tender = entered ? Number.parseInt(tenderDigits, 10) : 0;
   const change = tender - due;
@@ -61,6 +53,52 @@ export function PaymentSheet({ due, settings, completed, onComplete, onClose }: 
   }
 
   const showReceipt = completed !== null;
+
+  /**
+   * A cashier with a keyboard is faster than any on-screen pad, so the sheet
+   * accepts one: digits build the tender in minor units exactly as the keypad
+   * does, Backspace corrects, Enter completes. Modifier combinations are left
+   * alone so Ctrl+P still prints the receipt.
+   */
+  useEffect(() => {
+    function onKey(event: globalThis.KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      const target = event.target;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      // A focused button already answers Enter natively. Acting here too would
+      // run the sale twice — the reducer refuses the second, but don't rely on
+      // that to paper over a double dispatch.
+      if (event.key === "Enter" && target instanceof HTMLButtonElement) return;
+
+      // Nothing to type into on the receipt; Enter starts the next order.
+      if (showReceipt) {
+        if (event.key === "Enter") onClose();
+        return;
+      }
+      if (event.key === "Enter") {
+        if (canComplete) onComplete({ method, tender, tip });
+        return;
+      }
+      if (method !== "cash") return;
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        press("back");
+        return;
+      }
+      if (/^[0-9]$/.test(event.key)) press(event.key);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // Same reasoning as the register shortcuts: no array, no stale tender.
+  });
 
   return (
     <div
@@ -193,6 +231,11 @@ export function PaymentSheet({ due, settings, completed, onComplete, onClose }: 
                   value={formatMoney(entered ? Math.abs(change) : 0, currency)}
                   tone={!entered ? "idle" : change >= 0 ? "ok" : "short"}
                 />
+
+                <p className="mt-2.5 hidden text-[11.5px] leading-relaxed text-muted lg:block">
+                  Or type the amount on the keyboard — Backspace corrects, Enter
+                  completes the sale.
+                </p>
               </>
             ) : (
               <>
@@ -260,7 +303,8 @@ export function PaymentSheet({ due, settings, completed, onComplete, onClose }: 
 
         <div
           data-print="hide"
-          className="flex shrink-0 gap-2.5 border-t border-line px-[18px] pb-4 pt-[13px]"
+          /* Clears the iPhone home indicator; 1rem everywhere the inset is 0. */
+          className="flex shrink-0 gap-2.5 border-t border-line px-[18px] pb-[max(1rem,env(safe-area-inset-bottom))] pt-[13px]"
         >
           {showReceipt ? (
             <>
